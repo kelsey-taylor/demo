@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8' />
+    <title>Major truck routes on the National Highway System</title>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+	<script src='https://api.tiles.mapbox.com/mapbox-gl-js/v1.0.0/mapbox-gl.js'></script>
+	<link href='https://api.tiles.mapbox.com/mapbox-gl-js/v1.0.0/mapbox-gl.css' rel='stylesheet' />
+	<style>
+        body { margin:0; padding:0; font-family: 'Tw Cen MT', Sans-serif;}
+        #map { position:absolute; top:0; bottom:0; width:100%; }
+		h2 {
+			font-size: 24px;
+			line-height: 24px;
+			margin-bottom: 3px;
+			margin-top: 3px;
+			text-align: center;
+		}
+		h3 {
+			font-size: 14px;
+			line-height: 14px;
+			margin-bottom: 5px;
+			margin-top: 5px;
+		}
+		h4 {
+			font-size: 18px;
+			line-height: 18px;
+			margin-bottom: 5px;
+			margin-top: 5px;
+			text-align: center;
+		}
+		#lConsole {
+			  position: absolute;
+			  left: 5px;
+			  top: 50%;
+			  width: 75px;
+			  margin: 2px;
+			  padding: 2px 2px;
+			  background-color: white;
+		}
+		#rConsole {
+			  position: absolute;
+			  right: 5px;
+			  top: 50%;
+			  width: 75px;
+			  margin: 2px;
+			  padding: 2px 2px;
+			  background-color: white;
+		}
+		#console {
+			  position: absolute;
+			  width: 200px;
+			  margin: 5px;
+			  padding: 5px 5px;
+			  background-color: white;
+		}
+		.session {
+			margin-bottom: 5px;
+		}
+		.row {
+			height: 20px;
+			width: 100%;
+		}
+		.colors {
+			background: linear-gradient(to right, #F6F0A9, #E13A3F, #C608C6);
+			margin-bottom: 5px;
+		}
+		.label {
+			width: 30%;
+			display: inline-block;
+			text-align: center;
+		}
+		.label2 {
+			width: 12%;
+			display: inline-block;
+			text-align: center;
+		}
+		.legend div span {
+			border-radius: 1px;
+			display: inline-block;
+			width: 33%;
+			text-align: center;
+			background-color: black;
+		}
+	</style>
+</head>
+<body>
+
+<div id='before' class='map'>
+</div>
+<div id='after' class='map'>
+</div>
+<div id='lConsole'>
+  <h2>2015</h2>
+</div>   
+<div id='rConsole'>
+  <h2>2045</h2>
+</div>
+
+<div id='console'>
+	  <h4>Percentage of all traffic</h4>
+	<div class='session'>
+	  <div class='row colors'>
+	  </div>
+	  <div class='row labels'>
+		<div class='label'>low</div>
+		<div class='label'></div>
+		<div class='label'>high</div>
+	  </div>
+	<h4><br>Average annual truck traffic</h4>
+	<div id='line-legend' class='legend'>
+    <div><span style="height: 1px"></span><span style="height: 7.5px"></span><span style="height: 15px"></span></div>
+	<div class='label2'>0</div>
+	<div class='label2'></div>
+	<div class='label2'></div>
+	<div class='label2'>100k</div>
+	<div class='label2'></div>
+	<div class='label2'></div>
+	<div class='label2'>200k</div>
+</div>
+	</div>
+
+</div>
+	
+<style>
+	body {
+		overflow: hidden;
+	}
+	 
+	body * {
+		-webkit-touch-callout: none;
+		-webkit-user-select: none;
+		-moz-user-select: none;
+		-ms-user-select: none;
+		user-select: none;
+	}
+	 
+	.map {
+		position: absolute;
+		top: 0;
+		bottom: 0;
+		width: 100%;
+	}
+</style>
+
+<style>
+    .mapboxgl-popup {
+        max-width: 400px;
+        font: 12px/20px 'Tw Cen MT', Sans-serif;
+    }
+</style>
+
+<script src='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-compare/v0.1.0/mapbox-gl-compare.js'></script>
+<link rel='stylesheet' href='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-compare/v0.1.0/mapbox-gl-compare.css' type='text/css' />
+
+<script>
+mapboxgl.accessToken = 'pk.eyJ1Ijoia2Vsc2V5LXRheWxvci1jdHIiLCJhIjoiY2p0end2NnM4Mzk2MjQzbzQxZW83NWdkNiJ9.yRDhzNeFbitn6fBFGeloNg';
+
+var beforeMap = new mapboxgl.Map({
+	container: 'before',
+	style: 'mapbox://styles/kelsey-taylor-ctr/cju1kjf231e5f1fqwiueo22ne',
+	center: [-116.088, 37.427],
+	zoom: 5.33,
+	minZoom: 4
+	});
+
+var afterMap = new mapboxgl.Map({
+	container: 'after',
+	style: 'mapbox://styles/kelsey-taylor-ctr/cju1kjf231e5f1fqwiueo22ne',
+	center: [-116.088, 37.427],
+	zoom: 5.33,
+	minZoom: 4
+	});
+	
+var map = new mapboxgl.Compare(beforeMap, afterMap, {
+	// Set this to enable comparing two maps by mouse movement:
+	// mousemove: true
+});
+
+var zoomThreshold = 5;
+
+afterMap.on('load', function () {
+	beforeMap.addLayer({
+		'id': 'NHS_b4_lowtruck',
+		'type': 'line',
+		'source': {
+			type: 'vector',
+			url: 'mapbox://kelsey-taylor-ctr.ci3fhymv'
+		},
+		'source-layer': 'NHS_Mapbox_simp-6y0adh',
+		'layout': {
+			'line-join': 'bevel',
+			'line-cap': 'round'
+		},
+		'paint': {
+			'line-width': 0.5,
+			'line-color': '#E0DFE0'
+		}
+	});
+
+	beforeMap.addLayer({
+		'id': 'interstate_b4_lowtruck',
+		'type': 'line',
+		'source': {
+			type: 'vector',
+			url: 'mapbox://kelsey-taylor-ctr.b10v91z0'
+		},
+		'source-layer': 'Interstates-dcqt05',
+		'maxzoom': zoomThreshold,
+		'layout': {
+			'line-join': 'bevel',
+			'line-cap': 'round'
+		},
+		'paint': {
+			'line-width': 1.0,
+			'line-color': '#E0DFE0',
+		}
+	});
+	
+	beforeMap.addLayer({
+		'id': 'NHS_before',
+		'type': 'line',
+		'source': {
+			type: 'vector',
+			url: 'mapbox://kelsey-taylor-ctr.ci3fhymv'
+		},
+		'source-layer': 'NHS_Mapbox_simp-6y0adh',
+		'layout': {
+			'line-join': 'bevel',
+			'line-cap': 'round'
+		},
+		'paint': {
+			'line-width': [
+				'interpolate',
+				['linear'],
+				['number', ['get', 'AADTT15']],
+				0, 0.1,
+				8499, 0.1,
+				8500, 1.5,
+				219889, 15.0
+			],
+			'line-color': [
+				'interpolate',
+				['linear'],
+				['number', ['get', 'RATIO15']],
+				0, '#F6F0A9',
+				0.25, '#E13A3F',
+				0.45, '#C608C6'
+			],
+		}
+	});	
+	
+	beforeMap.addLayer({
+		'id': 'interstate_before',
+		'type': 'line',
+		'source': {
+			type: 'vector',
+			url: 'mapbox://kelsey-taylor-ctr.b10v91z0'
+		},
+		'source-layer': 'Interstates-dcqt05',
+		'maxzoom': zoomThreshold,
+		'layout': {
+			'line-join': 'bevel',
+			'line-cap': 'round'
+		},
+		'paint': {
+			'line-width': [
+				'interpolate',
+				['linear'],
+				['number', ['get', 'AADTT15']],
+				0, 0.1,
+				8499, 0.1,
+				8500, 1.5,
+				219889, 15.0
+			],
+			'line-color': [
+				'interpolate',
+				['linear'],
+				['number', ['get', 'RATIO15']],
+				0, '#F6F0A9',
+				0.25, '#E13A3F',
+				0.45, '#C608C6'
+			],
+		}
+	});
+	//beforeMap.setFilter('NHS_before', ['>=', 'AADTT15', 8500]);
+	beforeMap.setFilter('interstate_before', ['>=', 'AADTT15', 8500]);
+	beforeMap.setFilter('interstate_b4_lowtruck', ['<', 'AADTT15', 8500]);
+	//beforeMap.setFilter('NHS_b4_lowtruck', ['<', 'AADTT15', 8500]);
+
+	afterMap.addLayer({
+		'id': 'NHS_aft_lowtruck',
+		'type': 'line',
+		'source': {
+			type: 'vector',
+			url: 'mapbox://kelsey-taylor-ctr.ci3fhymv'
+		},
+		'source-layer': 'NHS_Mapbox_simp-6y0adh',
+		'layout': {
+			'line-join': 'bevel',
+			'line-cap': 'round'
+		},
+		'paint': {
+			'line-width': 0.5,
+			'line-color': '#E0DFE0'
+		}
+	});	
+	
+	afterMap.addLayer({
+		'id': 'interstate_aft_lowtruck',
+		'type': 'line',
+		'source': {
+			type: 'vector',
+			url: 'mapbox://kelsey-taylor-ctr.b10v91z0'
+		},
+		'source-layer': 'Interstates-dcqt05',
+		'maxzoom': zoomThreshold,
+		'layout': {
+			'line-join': 'bevel',
+			'line-cap': 'round'
+		},
+		'paint': {
+			'line-width': 1.0,
+			'line-color': '#E0DFE0',
+		}
+	});
+	
+	afterMap.addLayer({
+		'id': 'NHS_after',
+		'type': 'line',
+		'source': {
+			type: 'vector',
+			url: 'mapbox://kelsey-taylor-ctr.ci3fhymv'
+		},
+		'source-layer': 'NHS_Mapbox_simp-6y0adh',
+		'layout': {
+			'line-join': 'bevel',
+			'line-cap': 'round'
+		},
+		'paint': {
+			'line-width': [
+				'interpolate',
+				['linear'],
+				['number', ['get', 'AADTT45']],
+				0, 0.1,
+				8499, 0.1,
+				8500, 1.5,
+				219889, 15.0
+			],
+			'line-color': [
+				'interpolate',
+				['linear'],
+				['number', ['get', 'RATIO45']],
+				0, '#F6F0A9',
+				0.25, '#E13A3F',
+				0.45, '#C608C6'
+			],
+		}
+	});
+	
+	afterMap.addLayer({
+		'id': 'interstate_after',
+		'type': 'line',
+		'source': {
+			type: 'vector',
+			url: 'mapbox://kelsey-taylor-ctr.b10v91z0'
+		},
+		'source-layer': 'Interstates-dcqt05',
+		'maxzoom': zoomThreshold,
+		'layout': {
+			'line-join': 'bevel',
+			'line-cap': 'round'
+		},
+		'paint': {
+			'line-width': [
+				'interpolate',
+				['linear'],
+				['number', ['get', 'AADTT45']],
+				0, 0.1,
+				8499, 0.1,
+				8500, 1.5,
+				219889, 15.0
+			],
+			'line-color': [
+				'interpolate',
+				['linear'],
+				['number', ['get', 'RATIO45']],
+				0, '#F6F0A9',
+				0.25, '#E13A3F',
+				0.45, '#C608C6'
+			],
+		}
+	});
+	//afterMap.setFilter('NHS_after', ['>=', 'AADTT45', 8500]);
+	afterMap.setFilter('interstate_after', ['>=', 'AADTT45', 8500]);
+	beforeMap.setFilter('interstate_aft_lowtruck', ['<', 'AADTT45', 8500]);
+	//afterMap.setFilter('NHS_aft_lowtruck', ['<', 'AADTT45', 8500]);
+});
+
+</script>
+
+</body>
+</html>
